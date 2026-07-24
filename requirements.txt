@@ -1,0 +1,38 @@
+# ── Core runtime ────────────────────────────────────────────────────────────
+# Pinned to known-good minor ranges; safe to `pip install -r requirements.txt`.
+
+# Data layer (pandas only — no DuckDB, per FINAL_ARCHITECTURE_DECISIONS.md D10)
+pandas==2.2.2
+numpy==1.26.4
+pyarrow==16.1.0            # parquet read/write for the sample dataset
+
+# Shared models / config (single source of truth — schemas.py, config.py)
+pydantic==2.8.2
+pydantic-settings==2.4.0
+
+# ML anomaly detection (IsolationForest — D8)
+scikit-learn==1.5.1
+
+# Visualization (D-viz: Plotly)
+plotly==5.23.0
+
+# Backend API (OPTIONAL boundary — D13; Streamlit calls the agent in-process by default)
+fastapi==0.111.1
+uvicorn==0.30.3
+
+# Frontend (D13)
+streamlit==1.37.1
+
+# LLM client (primary provider: Groq — D16). Gemini/Ollama are optional fallbacks,
+# left uninstalled by default to keep the one-command install lean and offline-friendly.
+groq==0.9.0
+python-dotenv==1.0.1
+requests==2.32.3
+
+# ── Dev / test ──────────────────────────────────────────────────────────────
+pytest==8.3.2
+ruff==0.5.5
+
+# ── Optional LLM fallbacks (uncomment if used; disclose in README) ───────────
+# google-generativeai==0.7.2   # Gemini Flash fallback
+# ollama==0.3.1                 # local Llama fallback (offline demo)
