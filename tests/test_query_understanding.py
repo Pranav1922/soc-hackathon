@@ -143,6 +143,7 @@ def test_fallback_extracts_pattern_and_date_range() -> None:
     result = qu.understand("Find structuring patterns in the last 30 days", SCHEMA)
     assert result.intent is IntentType.DETECT_PATTERN
     assert result.aml_pattern is AMLPattern.STRUCTURING
+    assert result.filters.date_range is not None
     assert result.filters.date_range.last_days == 30
 
 
