@@ -13,7 +13,7 @@ from pathlib import Path
 import pandas as pd
 
 from app.enums import ExecutionStatus, ToolName
-from app.schemas import Context
+from app.schemas import Context, ToolResult, TraceEntry
 from app.tools.data_loader import REQUIRED_COLUMNS, DataLoader
 
 VALID_ROWS = """customer_id,txn_id,timestamp,amount,direction,counterparty_id,country,channel
@@ -33,7 +33,7 @@ def _context() -> Context:
     return Context(query="Analyse this dataset for suspicious activity")
 
 
-def _run(path: Path) -> tuple[Context, object, object]:
+def _run(path: Path) -> tuple[Context, ToolResult, TraceEntry]:
     loader = DataLoader()
     return loader.run(_context(), {"path": path})
 
@@ -58,6 +58,7 @@ class TestSuccessfulLoad:
         context, _, _ = _run(path)
 
         assert context.working_df is not None
+        assert context.raw_df is not None
         pd.testing.assert_frame_equal(
             context.working_df.reset_index(drop=True),
             context.raw_df.reset_index(drop=True),
@@ -70,6 +71,7 @@ class TestSuccessfulLoad:
         path = _write_csv(tmp_path, VALID_ROWS)
         context, _, _ = _run(path)
 
+        assert context.raw_df is not None
         assert "date" in context.raw_df.columns
         assert "hour" in context.raw_df.columns
         assert context.raw_df.loc[0, "hour"] == 10
@@ -92,6 +94,7 @@ class TestSuccessfulLoad:
         path = _write_csv(tmp_path, VALID_ROWS)
         context, _, _ = _run(path)
 
+        assert context.raw_df is not None
         assert pd.api.types.is_datetime64_any_dtype(context.raw_df["timestamp"])
         assert pd.api.types.is_float_dtype(context.raw_df["amount"])
 
@@ -148,6 +151,7 @@ class TestMalformedData:
         assert trace.status == ExecutionStatus.SUCCESS
         assert trace.rows_in == 3
         assert trace.rows_out == 1
+        assert context.raw_df is not None
         assert len(context.raw_df) == 1
         assert context.raw_df.iloc[0]["txn_id"] == "T1"
 
@@ -185,6 +189,7 @@ class TestDeduplication:
 
         assert trace.rows_in == 3
         assert trace.rows_out == 2
+        assert context.raw_df is not None
         assert sorted(context.raw_df["txn_id"]) == ["T1", "T2"]
 
 
@@ -195,6 +200,8 @@ class TestDeterminism:
         context2, _, trace2 = _run(path)
 
         assert trace1.rows_out == trace2.rows_out
+        assert context1.raw_df is not None
+        assert context2.raw_df is not None
         assert list(context1.raw_df.columns) == list(context2.raw_df.columns)
         assert context1.schema_map == context2.schema_map
         pd.testing.assert_frame_equal(

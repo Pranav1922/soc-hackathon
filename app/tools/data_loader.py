@@ -124,7 +124,7 @@ class DataLoader(Tool):
         # every query needs every tool"); Filter narrows it further when planned.
         context.raw_df = df
         context.working_df = df.copy()
-        context.schema_map = {col: str(dtype) for col, dtype in df.dtypes.items()}
+        context.schema_map = {str(col): str(dtype) for col, dtype in df.dtypes.items()}
         context.dataset_max_timestamp = (
             df["timestamp"].max() if not df.empty else None
         )
