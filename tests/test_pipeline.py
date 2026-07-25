@@ -1,25 +1,30 @@
 """Integration tests for :class:`app.agent.pipeline.Pipeline`.
 
 Verify the orchestrator only coordinates the completed modules: correct execution
-order, a valid APIResponse, graceful behaviour with a missing dataset and unfinished
-Developer-B tool stubs, and deterministic output. No production module is modified.
+order, a valid APIResponse, graceful behaviour with a missing dataset, isolation of a
+failing tool, and deterministic output. No production module is modified.
 """
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
+
+import pytest
 
 from app.agent.executor import Executor
 from app.agent.pipeline import Pipeline
 from app.agent.planner import DeterministicPlanner
 from app.enums import AMLPattern, ExecutionStatus, IntentType, ToolName
-from app.interfaces import Planner, QueryUnderstanding
+from app.interfaces import Planner, QueryUnderstanding, Tool
 from app.response import ResponseFormatter
 from app.schemas import (
     APIResponse,
     Context,
     ExecutionPlan,
     ExecutionStep,
+    ToolResult,
+    TraceEntry,
     Understanding,
 )
 
@@ -109,21 +114,38 @@ def test_analyze_returns_apiresponse_end_to_end() -> None:
     assert ToolName.AML_PATTERN_DETECTOR in [s.tool for s in response.plan]
 
 
-def test_missing_dataset_is_handled_gracefully() -> None:
-    # No dataset committed -> startup schema load fails softly, construction succeeds.
+def test_missing_dataset_is_handled_gracefully(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Explicitly simulate a missing dataset (independent of any on-disk sample):
+    # the startup schema load fails softly, construction succeeds, analyze still runs.
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "dataset_path", Path("/nonexistent/no_such_dataset.parquet"))
     pipeline = Pipeline()
     assert pipeline.schema_map == {}
     response = pipeline.analyze(QUERY)  # must still return a response
     assert isinstance(response, APIResponse)
 
 
-def test_unfinished_devb_tools_do_not_break_the_pipeline() -> None:
-    # Filter/RiskClassifier/Explainer/Recommender/Visualizer are stubs that raise;
-    # the executor isolates them as ERROR trace entries and the pipeline completes.
-    response = Pipeline().analyze(QUERY)
-    statuses = {t.tool: t.status for t in response.trace}
-    assert ExecutionStatus.ERROR in statuses.values()  # some stub failed, isolated
-    assert isinstance(response, APIResponse)  # but analyze() did not raise
+def test_tool_failure_is_isolated_and_pipeline_still_returns() -> None:
+    # A failing tool must be isolated as an ERROR trace; the pipeline still completes
+    # and returns a valid APIResponse (executor failure-isolation, end to end).
+    from app.agent.tool_set import TOOLS
+
+    class _BoomTool(Tool):
+        @property
+        def name(self) -> ToolName:
+            return ToolName.DATA_LOADER
+
+        def run(
+            self, context: Context, params: dict[str, Any]
+        ) -> tuple[Context, ToolResult, TraceEntry]:
+            raise RuntimeError("boom")
+
+    registry = dict(TOOLS)
+    registry[ToolName.DATA_LOADER] = _BoomTool()
+    response = Pipeline(executor=Executor(tools=registry)).analyze(QUERY)
+    assert ExecutionStatus.ERROR in [t.status for t in response.trace]  # isolated
+    assert isinstance(response, APIResponse)  # analyze() did not raise
 
 
 # ── determinism / purity ─────────────────────────────────────────────────────
