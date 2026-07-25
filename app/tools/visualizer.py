@@ -13,14 +13,14 @@ required data is unavailable is skipped, not crashed on or padded with placehold
 data — MODULE_BREAKDOWN.md itself specifies "a fixed set of 3–4 templates", not a
 hard 4.
 
-**On "per-entity feature bars" (design decision):** :class:`app.tools.feature_engineering.FeatureEngineering`
-is not implemented yet (Developer A, Phase 4+), so ``context.features`` cannot be
-relied on. Rather than leave this chart permanently broken until that lands, it is
-built instead from the per-entity signal breakdown already produced by
+**On "per-entity feature bars" (design decision):** rather than plot raw
+:class:`app.tools.feature_engineering.FeatureEngineering` columns, this chart is
+built from the per-entity signal breakdown already produced by
 :class:`app.tools.risk_classifier.RiskClassifier` (``rule_severity``,
 ``anomaly_score``, final ``score`` — all in ``RiskResult.evidence``/``.score``).
 This is arguably more judge-relevant ("here's exactly what drove this score") and
-needs no schema change. Revisit once ``context.features`` is populated.
+needs no schema change. ``context.features`` remains available for a future richer
+per-feature chart if desired.
 """
 
 from __future__ import annotations
