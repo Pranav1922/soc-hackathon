@@ -9,12 +9,21 @@ Run (only if needed): ``uvicorn app.main:app --reload``.
 
 from __future__ import annotations
 
+from functools import lru_cache
+
 from fastapi import FastAPI, HTTPException, status
 
+from app.agent.pipeline import Pipeline
 from app.config import configure_logging, settings
 from app.schemas import APIRequest, APIResponse
 
 configure_logging()
+
+
+@lru_cache(maxsize=1)
+def get_pipeline() -> Pipeline:
+    """Return the process-wide orchestrator, built once on first use."""
+    return Pipeline()
 
 app = FastAPI(
     title="AI-Powered Suspicious Activity Detection",
@@ -32,8 +41,7 @@ def health() -> dict[str, str]:
 @app.get("/schema")
 def get_schema() -> dict[str, str]:
     """Return the loaded dataset's column -> dtype map (for UIs / prompt grounding)."""
-    # TODO(Phase 4): return the DataLoader's schema_map.
-    raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED, "schema — Phase 4")
+    return get_pipeline().schema_map
 
 
 @app.get("/examples")
@@ -47,9 +55,6 @@ def get_examples() -> list[dict[str, str]]:
 def analyze(request: APIRequest) -> APIResponse:
     """Run the full agent pipeline for a query and return the structured response.
 
-    Pipeline (later phases): understanding → deterministic plan → execute →
-    format (D1, D12).
+    Pipeline: understanding → deterministic plan → execute → format (D1, D12).
     """
-    # TODO(Phase 3): wire QueryUnderstanding -> DeterministicPlanner -> Executor ->
-    # ResponseFormatter and return the APIResponse.
-    raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED, "analyze — wired in Phase 3")
+    return get_pipeline().analyze(request.query)
