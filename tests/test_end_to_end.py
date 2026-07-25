@@ -1,9 +1,8 @@
-"""End-to-end tests (D18). The response-contract shape is checked now; the full
-query→response pipeline is scaffolded and skipped until wiring lands (Phase 3)."""
+"""Response-contract structural tests (D18): the frozen APIResponse shape, the
+ExecutionStep/TraceEntry split, and the runnable-tool registry. A full
+query→APIResponse integration test is a recommended post-merge follow-up."""
 
 from __future__ import annotations
-
-import pytest
 
 from app.agent.tool_set import TOOLS
 from app.enums import (
@@ -82,9 +81,3 @@ def test_runnable_registry_excludes_response_formatter() -> None:
     assert len(TOOLS) == 10
     assert ToolName.RESPONSE_FORMATTER not in TOOLS
     assert ResponseFormatter().name == ToolName.RESPONSE_FORMATTER
-
-
-@pytest.mark.skip(reason="TODO(Phase 3): full understanding→plan→execute→format wiring")
-def test_query_returns_valid_response() -> None:
-    """A query string produces a schema-valid APIResponse via the full pipeline."""
-    # Phase 3: run the pipeline and assert plan/skipped/results/trace populated.
