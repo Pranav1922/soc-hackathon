@@ -182,6 +182,22 @@ def test_missing_values_do_not_crash_or_corrupt() -> None:
     assert pd.notna(f.loc["C1", "amount_zscore_max"])
 
 
+def test_no_feature_column_ever_contains_nan() -> None:
+    # A customer whose amounts are all NaN must still yield finite features
+    # (rolling_sum in particular must not leak NaN).
+    df = _df(
+        [
+            _row("C1", "T1", "2023-01-01T10:00:00", float("nan"), "deposit"),
+            _row("C1", "T2", "2023-01-02T10:00:00", float("nan"), "deposit"),
+        ]
+    )
+    context, _, trace = _run(df)
+    assert trace.status is ExecutionStatus.SUCCESS
+    assert context.features is not None
+    assert not context.features.isna().any().any()
+    assert context.features.loc["C1", "rolling_sum_max"] == 0.0
+
+
 def test_missing_required_column_skips_only_that_family() -> None:
     # Drop 'direction' -> rapid_cash_out cannot be computed; others still can.
     df = SAMPLE.drop(columns=["direction"])

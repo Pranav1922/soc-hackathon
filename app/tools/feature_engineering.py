@@ -262,8 +262,10 @@ class FeatureEngineering(Tool):
         out: dict[Any, float] = {}
         for customer, sub in df.groupby(_CUSTOMER):
             series = sub.set_index("timestamp")["amount"].sort_index()
-            rolled = series.rolling(window).sum()
-            out[customer] = float(rolled.max()) if not rolled.empty else 0.0
+            peak = series.rolling(window).sum().max()
+            # A window of only-NaN amounts yields NaN; coerce to 0.0 so no feature
+            # column ever contains NaN (never silently corrupt data for downstream ML).
+            out[customer] = float(peak) if pd.notna(peak) else 0.0
         return pd.Series(out, dtype=float)
 
     @staticmethod
