@@ -64,10 +64,15 @@ _PATTERN_INTENTS: frozenset[IntentType] = frozenset(
     {IntentType.DETECT_PATTERN, IntentType.COMPARE}
 )
 
-# Rule patterns evaluated for broad / single-entity queries (no specific pattern given).
+# Rule patterns evaluated for broad / single-entity queries (no specific pattern
+# given) — the full D6 rule set. rapid_cash_out is included here so single-entity/EDA
+# queries (which never run the AnomalyDetector) still detect it via its crisp rule; a
+# query that *specifically* asks for velocity/rapid_cash_out still routes to the
+# AnomalyDetector (see include_anomaly / _ANOMALY_PATTERNS, AGENT_FLOW §3).
 _ALL_RULE_PATTERNS: tuple[AMLPattern, ...] = (
     AMLPattern.STRUCTURING,
     AMLPattern.SMURFING,
+    AMLPattern.RAPID_CASH_OUT,
     AMLPattern.LAYERING,
 )
 
