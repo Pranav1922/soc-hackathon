@@ -61,7 +61,10 @@ export default function ChartCard({ chart }: { chart: ChartSpec }) {
   }, []);
 
   return (
-    <div ref={cardRef} className="glass flex flex-col overflow-hidden bg-surface-900/60">
+    <div
+      ref={cardRef}
+      className="glass flex flex-col overflow-hidden bg-surface-900/60 transition-all duration-300 hover:border-accent/25 hover:shadow-soft"
+    >
       <div className="flex items-start justify-between gap-3 border-b border-white/5 px-4 py-3">
         <div className="min-w-0">
           <h4 className="truncate text-sm font-semibold text-slate-100">{chart.title || "Untitled chart"}</h4>

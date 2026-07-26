@@ -85,9 +85,9 @@ export default function Landing() {
             Start Investigation
             <FiArrowRight className="h-4 w-4" />
           </Link>
-          <a href="#architecture" className="btn-outline">
+          <Link to="/architecture" className="btn-outline">
             View Architecture
-          </a>
+          </Link>
         </m.div>
       </m.section>
 

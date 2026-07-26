@@ -8,6 +8,7 @@ import AppLayout from "@/layouts/AppLayout";
 import Dashboard from "@/pages/Dashboard";
 import Analyze from "@/pages/Analyze";
 import Pipeline from "@/pages/Pipeline";
+import Architecture from "@/pages/Architecture";
 import Placeholder from "@/pages/Placeholder";
 
 // Landing is the entry page but not needed once inside the app — load it lazily.
@@ -38,6 +39,7 @@ export default function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/analyze" element={<Analyze />} />
               <Route path="/pipeline" element={<Pipeline />} />
+              <Route path="/architecture" element={<Architecture />} />
               <Route path="/history" element={<Placeholder title="History" phase="a later phase" />} />
               <Route path="/activity" element={<Placeholder title="Activity" phase="a later phase" />} />
             </Route>

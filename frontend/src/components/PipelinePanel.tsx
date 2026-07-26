@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { IconType } from "react-icons";
-import { FiCheck, FiChevronDown, FiLoader, FiSkipForward, FiX } from "react-icons/fi";
+import { FiArrowRight, FiCheck, FiChevronDown, FiClock, FiLoader, FiSkipForward, FiX } from "react-icons/fi";
 import type { ExecutionStatus, ExecutionStep, ToolName, TraceEntry } from "@/types/api";
 import JsonBlock from "@/components/JsonBlock";
 
@@ -67,12 +67,16 @@ function Timeline({ steps }: { steps: Step[] }) {
         const last = i === steps.length - 1;
         return (
           <li key={`${step.tool}-${i}`} className="flex gap-4">
-            {/* rail: status node + connector */}
+            {/* rail: status node + animated connector */}
             <div className="flex flex-col items-center">
-              <span className={`z-10 grid h-8 w-8 shrink-0 place-items-center rounded-full border ${s.ring} ${s.text}`}>
+              <span
+                className={`z-10 grid h-8 w-8 shrink-0 place-items-center rounded-full border ${s.ring} ${s.text} ${
+                  step.status === "SUCCESS" ? "shadow-[0_0_14px_-2px_rgba(16,185,129,0.55)]" : ""
+                }`}
+              >
                 <s.Icon className={`h-4 w-4 ${step.status === "RUNNING" ? "animate-spin" : ""}`} />
               </span>
-              {!last && <span className="my-1 w-px flex-1 bg-white/10" />}
+              {!last && <span className={`my-1 flex-1 ${step.executed ? "flow-connector" : "flow-connector--muted"}`} />}
             </div>
             {/* card */}
             <div className={`glass mb-4 flex-1 p-4 ${step.executed ? "" : "opacity-70"}`}>
@@ -81,16 +85,24 @@ function Timeline({ steps }: { steps: Step[] }) {
                 <span className="font-semibold text-slate-100">{step.tool}</span>
                 <StatusBadge status={step.status} />
                 {step.confidence !== undefined && (
-                  <span className="ml-auto text-xs text-slate-500">
-                    confidence <span className="font-mono text-slate-300">{Math.round(step.confidence * 100)}%</span>
+                  <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-accent/25 bg-accent/10 px-2 py-0.5 text-[11px] font-medium text-accent">
+                    {Math.round(step.confidence * 100)}% confidence
                   </span>
                 )}
               </div>
               {step.reason && <p className="mt-2 text-sm leading-relaxed text-slate-400">{step.reason}</p>}
               {step.trace && (
-                <p className="mt-2 font-mono text-xs text-slate-500">
-                  {nf.format(step.trace.rows_in)} → {nf.format(step.trace.rows_out)} rows · {nf.format(step.trace.duration_ms)} ms
-                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-[11px] text-slate-400">
+                    {nf.format(step.trace.rows_in)}
+                    <FiArrowRight className="h-3 w-3" />
+                    {nf.format(step.trace.rows_out)} rows
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-[11px] text-slate-400">
+                    <FiClock className="h-3 w-3" />
+                    {nf.format(step.trace.duration_ms)} ms
+                  </span>
+                </div>
               )}
             </div>
           </li>
