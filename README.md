@@ -1,25 +1,42 @@
 # AI-Powered Suspicious Activity Detection
 
-An agentic AML (Anti-Money Laundering) analysis system. A user asks a natural-language
-question about transaction data; the agent **understands** the query, **plans a different
-tool path for each question**, executes only the tools it needs, and returns explainable,
-evidence-grounded risk flags with escalation recommendations — plus a visible trace of
-*what it decided and why*.
+An agentic AML (Anti-Money Laundering) investigation system. A user asks a natural-language
+question about transaction data; the agent **understands** the query, **dynamically plans a
+different tool path for each question**, executes only the tools it needs, and returns
+explainable, evidence-grounded risk flags with escalation recommendations — plus a visible
+trace of *what it decided and why*.
 
-> Built for a 48-hour campus hackathon (Problem Statement 1). Architecture is frozen —
-> see [`docs/FINAL_ARCHITECTURE_DECISIONS.md`](docs/FINAL_ARCHITECTURE_DECISIONS.md).
-> This repository currently contains the **production-quality foundation** (structure,
-> config, shared models, enums, interfaces). Business logic is implemented in later phases
-> (see the roadmap below).
+> Built for a 48-hour campus hackathon (Problem Statement 1: AI-Powered Suspicious Activity
+> Detection). Full technical writeup: [`docs/DETAILED_DOCUMENTATION.md`](docs/DETAILED_DOCUMENTATION.md)
+> (architecture, analysis algorithms, and UI design in one document).
 
 ---
 
 ## Problem statement
 
-Traditional rule-based AML systems drown compliance teams in false positives while
-sophisticated techniques (structuring, smurfing, layering) slip through. The goal is an
-autonomous agent that learns baseline behaviour, detects suspicious patterns, produces
-explainable risk assessments, and recommends an escalation action (monitor / review / report).
+Traditional rule-based AML systems drown compliance teams in false positives, while
+sophisticated techniques — structuring, smurfing, layering — slip past rigid thresholds. The
+goal: an autonomous agent that parses a plain-language request, investigates only what that
+request needs, and returns a risk assessment a human reviewer can actually audit — not a
+black-box score.
+
+## What it does
+
+- Parses a natural-language query → intent, filters (date range, segment, country, txn type),
+  entities, and target AML pattern
+- Builds a **query-specific execution plan** — invokes only the tools that query needs, never
+  a fixed sequence
+- Detects four AML typologies deterministically: **structuring, smurfing, rapid cash-out,
+  layering** — each with exact, auditable evidence (transaction IDs, thresholds, amounts)
+- Runs an unsupervised **IsolationForest** as a secondary detector for anomalies the named
+  rules don't cover, fit live on the query's own filtered subset
+- Fuses both signals into a **low / medium / high** risk band per entity, via a frozen,
+  documented formula
+- Generates a human-readable explanation and a recommended action (**monitor / review /
+  report**) per flag
+- Returns one structured response showing the plan, the skipped tools, the results, supporting
+  charts, and a full execution trace — the direct evidence that the system is not a fixed
+  pipeline
 
 ## Architecture summary
 
@@ -34,27 +51,40 @@ User query
 ```
 
 - **The LLM never computes numbers or builds the plan** — it only extracts a structured
-  understanding. Planning and execution are pure, deterministic, and testable.
-- **Hybrid detection:** deterministic AML rules (structuring / smurfing / rapid cash-out)
-  are primary and own the explanations; IsolationForest is the secondary "unknown-anomaly"
-  detector.
+  understanding. Planning and execution are pure, deterministic, and testable — this is what
+  keeps the demo reliable and every result reproducible.
+- **Hybrid detection:** deterministic AML rules (structuring / smurfing / rapid cash-out /
+  layering) are primary and own the explanations; IsolationForest is the secondary
+  "unknown-anomaly" detector, never overriding a confirmed rule hit.
 - **Explainability first:** explanations are template-built from real evidence values, never
-  hallucinated.
-- **Different queries produce different plans** — the `plan[]` + `skipped[]` fields prove the
-  system is not a fixed pipeline.
+  hallucinated by the LLM.
+- **Different queries produce different plans** — the `plan[]` + `skipped[]` fields in every
+  response are the visible proof.
 
-Full detail: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md),
-[`docs/AGENT_FLOW.md`](docs/AGENT_FLOW.md).
+Full detail (architecture diagram, component responsibilities, response contract, rejected
+alternatives, every rule's exact thresholds, and the full UI design): see
+**[`docs/DETAILED_DOCUMENTATION.md`](docs/DETAILED_DOCUMENTATION.md)**.
 
 ### Tech stack
-Python 3.11 · pandas + pyarrow · scikit-learn · Plotly · Streamlit · FastAPI (optional) ·
-Pydantic · Groq (Llama 3.3 70B, free tier) with Gemini/Ollama fallbacks · pytest.
-Rationale + rejected alternatives: [`docs/TECH_STACK.md`](docs/TECH_STACK.md).
+
+**Backend:** Python 3.11 · pandas + pyarrow · scikit-learn (IsolationForest) · Plotly ·
+Pydantic · FastAPI (optional API boundary) · Groq (Llama 3.3 70B, free tier) with
+Gemini/Ollama as optional fallbacks · pytest
+
+**Frontend:** two interfaces are provided —
+- **React + TypeScript** console ("AEGIS") — Vite, Tailwind CSS, React Router, Framer Motion,
+  Plotly.js, Axios
+- **Streamlit** — a lightweight fallback that calls the agent in-process; fewer moving parts,
+  useful if the React/FastAPI integration has issues live
+
+Full rationale for every choice (and what was rejected, and why): see
+[`docs/DETAILED_DOCUMENTATION.md`](docs/DETAILED_DOCUMENTATION.md) or
+[`docs/TECH_STACK.md`](docs/TECH_STACK.md).
 
 ## Project layout
 
 ```
-app/            modular monolith
+app/            modular monolith (backend)
   config.py       frozen constants + env-driven settings (single source of tunables)
   enums.py        shared enums (ToolName, IntentType, AMLPattern, RiskLevel, ...)
   schemas.py      shared Pydantic models (Understanding, Context, ExecutionPlan, ...)
@@ -64,20 +94,23 @@ app/            modular monolith
                   anomaly · risk_classifier · explainer · recommender · visualizer
   llm/            provider-agnostic LLM client
   response.py     Response Formatter (assembles the final structured response)
-ui/             streamlit_app.py (calls the agent in-process)
-scripts/        generate_synthetic.py (documented synthetic data generator)
-tests/          golden-plan / rules / features / end-to-end
-data/           raw (cited public data) · sample (committed) · synthetic (planted cases)
+frontend/       React + TypeScript console (Vite) — Dashboard, Analyze, Pipeline, Architecture
+ui/             streamlit_app.py — lightweight fallback UI, calls the agent in-process
+scripts/        generate_synthetic.py — documented synthetic data generator
+tests/          18 test files: planner, executor, filter, features, rules, response, etc.
+docs/           DETAILED_DOCUMENTATION.md + supporting architecture/design docs
+data/           raw (cited public data) · sample (committed fixture) · synthetic (planted cases)
 ```
+
 Directory rationale: [`docs/FOLDER_STRUCTURE.md`](docs/FOLDER_STRUCTURE.md).
 
 ## Installation
 
-Requires Python 3.11+.
+Requires Python 3.11+ and Node 18+ (only if running the React frontend).
 
 ```bash
 git clone <this-repo-url>
-cd soc-hackathon
+cd <repo-directory>
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 ```
@@ -91,8 +124,9 @@ cp .env.example .env
 # edit .env — set LLM_PROVIDER and LLM_API_KEY
 ```
 
-All tunables live in `app/config.py` (thresholds, IsolationForest params, risk formula,
-paths). Runtime/secret values come from `.env` via `app/config.py::Settings`.
+All tunables (AML rule thresholds, risk-scoring weights, IsolationForest parameters, paths)
+live in `app/config.py` — there are no magic numbers elsewhere in the codebase. Runtime/secret
+values (API keys, ports, log level) come from `.env` via `app/config.py::Settings`.
 
 ### Environment variables
 
@@ -109,49 +143,72 @@ paths). Runtime/secret values come from `.env` via `app/config.py::Settings`.
 
 ## Running locally
 
+**Quickest path (Streamlit):**
 ```bash
 ./run.sh
 # or manually:
 streamlit run ui/streamlit_app.py
 ```
 
-The optional API (only needed for a custom frontend) will run via:
-
+**React console + API:**
 ```bash
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload      # backend, http://localhost:8000
+cd frontend && npm install && npm run dev   # frontend, http://localhost:5173
 ```
 
-Run the tests:
-
+**Tests:**
 ```bash
 pytest
 ```
 
-## Implementation roadmap
+## Dataset
 
-Phased plan in [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md). Current status:
+**Recommended dataset:** [IBM Transactions for Anti Money Laundering (AML)](https://www.kaggle.com/datasets/ealtman2019/ibm-transactions-for-anti-money-laundering-aml)
+— synthetic bank transfer / credit card / check data generated from a multi-agent virtual
+world model covering the full placement → layering → integration cycle, with a laundering
+tag on every transaction. Schema and generation methodology documented at
+[IBM/AML-Data](https://github.com/IBM/AML-Data) (license: CDLA-Sharing-1.0). Use the
+**HI-Small** variant (`HI-Small_Trans.csv` + `HI-Small_Patterns.txt`).
 
-- [x] **Phase 0** — Project foundation: structure, config, shared models, enums, interfaces *(this commit)*
-- [ ] **Phase 1** — Vertical slice (deterministic path, no LLM/ML): DataLoader → Filter → FeatureEngineering (aggregation) → AMLPatternDetector (threshold) → RiskClassifier → Recommender → minimal UI
-- [ ] **Phase 2** — Feature engineering + AML rule engine (structuring / smurfing / rapid cash-out)
-- [ ] **Phase 3** — LLM Query Understanding + keyword fallback + flagship example buttons
-- [ ] **Phase 4** — EDA, IsolationForest anomaly detection, Explainer, Visualizer
-- [ ] **Phase 5** — Calibration, empty-result hardening, README polish
-- [ ] **Phase 6** — Deck, 2-minute video, deployment
+**Current status (documented honestly):** `scripts/generate_synthetic.py` — intended to
+generate a documented synthetic dataset with planted, known structuring/smurfing cases for
+validation — is scaffolded but not yet implemented. `data/raw/` and `data/synthetic/` are
+currently empty; `data/sample/transactions.parquet` is a small (2,056-row), unlabeled
+structural test fixture used to exercise the pipeline during development, not a validated
+dataset at realistic scale. The IsolationForest and rule thresholds in `app/config.py` are
+reasoned defaults and have not yet been calibrated against labeled data. This gap and its
+resolution plan are detailed in
+[`docs/DETAILED_DOCUMENTATION.md`](docs/DETAILED_DOCUMENTATION.md#5-what-is-not-yet-real-documentation-transparency).
 
-## Data sources
-
-The synthetic generator (`scripts/generate_synthetic.py`) produces documented transaction
-data with planted, explainable AML cases. Any public dataset used (e.g. Kaggle AML
-transaction datasets) will be **cited here with its source and license** before use.
-_TODO: add dataset citations + synthetic schema/assumptions when the data layer lands (D15)._
+All datasets used are from public/open sources only; no proprietary or confidential data is
+used anywhere in this repository.
 
 ## Disclosures (tools / APIs / AI assistance)
 
-- **LLM:** Groq (Llama 3.3 70B), used only for query understanding and optional explanation
-  phrasing — never for computing risk numbers.
-- **AI coding assistance** was used to scaffold and plan this repository.
-- _All external APIs and datasets will be listed here per hackathon rules._
+- **LLM:** Groq (Llama 3.3 70B, free tier) — used only for query understanding (intent/entity
+  extraction) and optional explanation phrasing. It never computes risk scores or builds the
+  execution plan.
+- **Open-source libraries:** pandas, numpy, pyarrow, scikit-learn, Plotly, Pydantic, FastAPI,
+  Streamlit, React, Vite, Tailwind CSS, Framer Motion, React Router, Axios — see
+  `requirements.txt` and `frontend/package.json` for exact versions.
+- **AI coding assistance** (Claude) was used throughout this project — for architecture design,
+  documentation, code implementation, and this README.
+- Dataset: IBM Transactions for Anti Money Laundering (AML), Kaggle/IBM Research — see
+  [Dataset](#dataset) above for citation and license.
+
+## Documentation
+
+- **[`docs/DETAILED_DOCUMENTATION.md`](docs/DETAILED_DOCUMENTATION.md)** — the complete
+  writeup: architecture, every analysis algorithm's exact logic and thresholds, and the full
+  UI design. Start here.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`docs/AGENT_FLOW.md`](docs/AGENT_FLOW.md),
+  [`docs/MODULE_BREAKDOWN.md`](docs/MODULE_BREAKDOWN.md) — architecture detail
+- [`docs/ANALYSIS_ALGORITHMS.md`](docs/ANALYSIS_ALGORITHMS.md) — algorithm detail on its own
+- [`docs/UI_DESIGN.md`](docs/UI_DESIGN.md) — UI design detail on its own
+- [`docs/REQUIREMENTS_CHECKLIST.md`](docs/REQUIREMENTS_CHECKLIST.md) — every hackathon
+  requirement mapped to the component that satisfies it
+- [`docs/TECH_STACK.md`](docs/TECH_STACK.md) — technology choices and rejected alternatives
+- [`docs/SELF_REVIEW.md`](docs/SELF_REVIEW.md) — a self-critique pass on the design
 
 ## License
 
