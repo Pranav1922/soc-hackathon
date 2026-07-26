@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
 import { FiActivity, FiMessageSquare, FiSearch, FiTarget, FiTrendingUp } from "react-icons/fi";
 import { useAnalysis } from "@/context/AnalysisContext";
+import { useActivity } from "@/context/ActivityContext";
 import Spinner from "@/components/Spinner";
 import ErrorBanner from "@/components/ErrorBanner";
 import InfoCard from "@/components/InfoCard";
@@ -24,10 +25,14 @@ function titleCase(value: string): string {
 export default function Analyze() {
   const [query, setQuery] = useState("");
   const { analyze, loading, error, response } = useAnalysis();
+  const { log } = useActivity();
 
   const runAnalyze = () => {
     const q = query.trim();
-    if (q && !loading) void analyze(q);
+    if (q && !loading) {
+      log("investigation_started", `Investigation started — “${q}”`);
+      void analyze(q);
+    }
   };
 
   const onSubmit = (e: FormEvent) => {
@@ -48,8 +53,8 @@ export default function Analyze() {
   return (
     <div className="space-y-6">
       <div className="animate-fade-up">
-        <h2 className="text-xl font-bold tracking-tight text-slate-100">Analyze</h2>
-        <p className="text-sm text-slate-400">
+        <h2 className="text-2xl font-bold tracking-tight text-slate-100">Analyze</h2>
+        <p className="mt-1 text-sm text-slate-400">
           Describe suspicious activity in plain language. The agent interprets intent before running detection.
         </p>
       </div>

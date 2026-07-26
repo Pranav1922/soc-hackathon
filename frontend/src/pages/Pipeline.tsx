@@ -15,8 +15,8 @@ export default function Pipeline() {
   return (
     <div className="space-y-6">
       <div className="animate-fade-up">
-        <h2 className="text-xl font-bold tracking-tight text-slate-100">Pipeline</h2>
-        <p className="text-sm text-slate-400">
+        <h2 className="text-2xl font-bold tracking-tight text-slate-100">Pipeline</h2>
+        <p className="mt-1 text-sm text-slate-400">
           Execution timeline and trace from your most recent analysis.
         </p>
       </div>

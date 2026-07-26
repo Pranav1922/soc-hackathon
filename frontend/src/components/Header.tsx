@@ -1,5 +1,6 @@
 import { FiBell, FiCommand, FiMenu, FiSearch } from "react-icons/fi";
 import type { HealthStatus } from "@/hooks/useHealth";
+import { useSearch } from "@/context/SearchContext";
 
 interface HeaderProps {
   onOpenMobile: () => void;
@@ -8,6 +9,7 @@ interface HeaderProps {
 
 /** Top application bar: mobile menu, contextual title, search affordance, live status. */
 export default function Header({ onOpenMobile, health }: HeaderProps) {
+  const { setOpen } = useSearch();
   const online = health === "online";
   const statusLabel = online ? "Online" : health === "offline" ? "Offline" : "Checking…";
   const statusClass = online
@@ -32,14 +34,19 @@ export default function Header({ onOpenMobile, health }: HeaderProps) {
         <p className="hidden text-xs text-slate-500 sm:block">AI-powered AML investigation console</p>
       </div>
 
-      {/* Command search (visual only) */}
-      <div className="ml-auto hidden max-w-md flex-1 items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-500 transition-colors hover:border-white/20 md:flex">
+      {/* Global search — opens the command palette (⌘K) */}
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label="Open global search"
+        className="ml-auto hidden max-w-md flex-1 items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-sm text-slate-500 transition-colors hover:border-white/20 md:flex"
+      >
         <FiSearch className="h-4 w-4" />
         <span className="flex-1">Search analyses…</span>
         <span className="chip gap-1 text-slate-500">
           <FiCommand className="h-3 w-3" /> K
         </span>
-      </div>
+      </button>
 
       <button
         type="button"

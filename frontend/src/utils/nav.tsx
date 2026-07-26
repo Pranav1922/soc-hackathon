@@ -5,16 +5,16 @@ export interface NavItem {
   label: string;
   to: string;
   icon: IconType;
-  /** Phase where this route becomes functional (informational for Phase 1). */
+  /** Whether the destination is a fully shipped page (drives the "Soon" badge). */
   ready: boolean;
 }
 
-/** Primary navigation. Analyze + Pipeline are shipped; History/Activity are pending. */
+/** Primary navigation. All destinations are shipped. */
 export const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", to: "/dashboard", icon: FiGrid, ready: true },
   { label: "Analyze", to: "/analyze", icon: FiSearch, ready: true },
   { label: "Pipeline", to: "/pipeline", icon: FiGitMerge, ready: true },
   { label: "Architecture", to: "/architecture", icon: FiShare2, ready: true },
-  { label: "History", to: "/history", icon: FiClock, ready: false },
-  { label: "Activity", to: "/activity", icon: FiActivity, ready: false },
+  { label: "History", to: "/history", icon: FiClock, ready: true },
+  { label: "Activity", to: "/activity", icon: FiActivity, ready: true },
 ];
