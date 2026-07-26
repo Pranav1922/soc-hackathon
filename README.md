@@ -7,8 +7,8 @@ explainable, evidence-grounded risk flags with escalation recommendations — pl
 trace of *what it decided and why*.
 
 > Built for a 48-hour campus hackathon (Problem Statement 1: AI-Powered Suspicious Activity
-> Detection). Full technical writeup: [`docs/DETAILED_DOCUMENTATION.md`](docs/DETAILED_DOCUMENTATION.md)
-> (architecture, analysis algorithms, and UI design in one document).
+> Detection). Architecture detail: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md),
+> [`docs/AGENT_FLOW.md`](docs/AGENT_FLOW.md), [`docs/MODULE_BREAKDOWN.md`](docs/MODULE_BREAKDOWN.md).
 
 ---
 
@@ -62,8 +62,8 @@ User query
   response are the visible proof.
 
 Full detail (architecture diagram, component responsibilities, response contract, rejected
-alternatives, every rule's exact thresholds, and the full UI design): see
-**[`docs/DETAILED_DOCUMENTATION.md`](docs/DETAILED_DOCUMENTATION.md)**.
+alternatives): see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and
+[`docs/AGENT_FLOW.md`](docs/AGENT_FLOW.md).
 
 ### Tech stack
 
@@ -78,7 +78,6 @@ Gemini/Ollama as optional fallbacks · pytest
   useful if the React/FastAPI integration has issues live
 
 Full rationale for every choice (and what was rejected, and why): see
-[`docs/DETAILED_DOCUMENTATION.md`](docs/DETAILED_DOCUMENTATION.md) or
 [`docs/TECH_STACK.md`](docs/TECH_STACK.md).
 
 ## Project layout
@@ -98,7 +97,7 @@ frontend/       React + TypeScript console (Vite) — Dashboard, Analyze, Pipeli
 ui/             streamlit_app.py — lightweight fallback UI, calls the agent in-process
 scripts/        generate_synthetic.py — documented synthetic data generator
 tests/          18 test files: planner, executor, filter, features, rules, response, etc.
-docs/           DETAILED_DOCUMENTATION.md + supporting architecture/design docs
+docs/           architecture, tech stack, requirements checklist, and design docs
 data/           raw (cited public data) · sample (committed fixture) · synthetic (planted cases)
 ```
 
@@ -176,9 +175,7 @@ validation — is scaffolded but not yet implemented. `data/raw/` and `data/synt
 currently empty; `data/sample/transactions.parquet` is a small (2,056-row), unlabeled
 structural test fixture used to exercise the pipeline during development, not a validated
 dataset at realistic scale. The IsolationForest and rule thresholds in `app/config.py` are
-reasoned defaults and have not yet been calibrated against labeled data. This gap and its
-resolution plan are detailed in
-[`docs/DETAILED_DOCUMENTATION.md`](docs/DETAILED_DOCUMENTATION.md#5-what-is-not-yet-real-documentation-transparency).
+reasoned defaults and have not yet been calibrated against labeled data.
 
 All datasets used are from public/open sources only; no proprietary or confidential data is
 used anywhere in this repository.
@@ -198,17 +195,15 @@ used anywhere in this repository.
 
 ## Documentation
 
-- **[`docs/DETAILED_DOCUMENTATION.md`](docs/DETAILED_DOCUMENTATION.md)** — the complete
-  writeup: architecture, every analysis algorithm's exact logic and thresholds, and the full
-  UI design. Start here.
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`docs/AGENT_FLOW.md`](docs/AGENT_FLOW.md),
   [`docs/MODULE_BREAKDOWN.md`](docs/MODULE_BREAKDOWN.md) — architecture detail
-- [`docs/ANALYSIS_ALGORITHMS.md`](docs/ANALYSIS_ALGORITHMS.md) — algorithm detail on its own
-- [`docs/UI_DESIGN.md`](docs/UI_DESIGN.md) — UI design detail on its own
 - [`docs/REQUIREMENTS_CHECKLIST.md`](docs/REQUIREMENTS_CHECKLIST.md) — every hackathon
   requirement mapped to the component that satisfies it
 - [`docs/TECH_STACK.md`](docs/TECH_STACK.md) — technology choices and rejected alternatives
 - [`docs/SELF_REVIEW.md`](docs/SELF_REVIEW.md) — a self-critique pass on the design
+
+A separate, detailed write-up covering platform architecture, analysis algorithms, and UI
+design in full is provided as part of the submission outside this repository.
 
 ## License
 
