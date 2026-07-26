@@ -1,0 +1,194 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-surface-950 text-slate-200 font-sans antialiased;
+    /* Animated depth now comes from <Background />; keep a solid base as fallback. */
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-white/10;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-white/20;
+  }
+
+  /* Consistent focus ring for keyboard users across interactive elements. */
+  a:focus-visible,
+  button:focus-visible,
+  [tabindex]:focus-visible {
+    @apply outline-none ring-2 ring-accent/50 ring-offset-2 ring-offset-surface-950;
+  }
+}
+
+@layer components {
+  /* ── Surfaces ─────────────────────────────────────────────────────────── */
+  .glass {
+    @apply rounded-2xl border border-white/10 bg-surface-900/50 shadow-glass backdrop-blur-xl;
+  }
+  .glass-hover {
+    @apply transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/30 hover:bg-surface-800/60 hover:shadow-soft;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-medium;
+  }
+
+  /* ── Buttons ──────────────────────────────────────────────────────────── */
+  .btn-accent {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-accent to-accent-deep px-4 py-2.5
+      text-sm font-semibold text-surface-950 shadow-glow transition duration-200
+      hover:brightness-110 active:scale-[0.98] active:brightness-95
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-950
+      disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100;
+  }
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5
+      text-sm font-semibold text-slate-200 backdrop-blur transition duration-200
+      hover:border-accent/40 hover:text-accent active:scale-[0.98]
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-950;
+  }
+
+  /* ── Navigation ───────────────────────────────────────────────────────── */
+  .nav-link {
+    @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400
+      transition-colors duration-200 hover:bg-white/5 hover:text-slate-100;
+  }
+  .nav-link-active {
+    @apply bg-accent/10 text-accent shadow-[inset_0_0_0_1px_rgba(34,211,238,0.25)];
+  }
+
+  /* ── Feature cards (landing) ──────────────────────────────────────────── */
+  .feature-card {
+    @apply relative overflow-hidden rounded-2xl border border-white/10 bg-surface-900/50 p-5 shadow-glass backdrop-blur-xl transition-all duration-300;
+  }
+  .feature-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(220px 120px at 50% -10%, rgba(34, 211, 238, 0.22), transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+  .feature-card:hover {
+    @apply -translate-y-1 border-accent/30 shadow-soft;
+  }
+  .feature-card:hover::before {
+    opacity: 1;
+  }
+
+  /* ── Animated background ──────────────────────────────────────────────── */
+  .aegis-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -10;
+    overflow: hidden;
+    pointer-events: none;
+    background: #060a13;
+  }
+  .aegis-bg__aurora {
+    position: absolute;
+    inset: -20%;
+    background:
+      radial-gradient(38% 38% at 22% 22%, rgba(34, 211, 238, 0.1), transparent 60%),
+      radial-gradient(40% 40% at 78% 30%, rgba(37, 99, 235, 0.12), transparent 60%),
+      radial-gradient(48% 48% at 50% 88%, rgba(56, 189, 248, 0.08), transparent 60%);
+    animation: aurora-drift 30s ease-in-out infinite alternate;
+    will-change: transform;
+  }
+  .aegis-bg__blob {
+    position: absolute;
+    width: 38rem;
+    height: 38rem;
+    border-radius: 9999px;
+    filter: blur(90px);
+    opacity: 0.5;
+    will-change: transform;
+  }
+  .aegis-bg__blob--1 {
+    top: -10rem;
+    left: -6rem;
+    background: radial-gradient(circle, rgba(34, 211, 238, 0.16), transparent 70%);
+    animation: blob-float-1 26s ease-in-out infinite alternate;
+  }
+  .aegis-bg__blob--2 {
+    bottom: -12rem;
+    right: -6rem;
+    background: radial-gradient(circle, rgba(37, 99, 235, 0.18), transparent 70%);
+    animation: blob-float-2 34s ease-in-out infinite alternate;
+  }
+  .aegis-bg__grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(148, 163, 184, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
+    background-size: 46px 46px;
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 25%, black, transparent 78%);
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 25%, black, transparent 78%);
+  }
+  .aegis-bg__dots {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(148, 163, 184, 0.35) 1px, transparent 1.4px);
+    background-size: 64px 64px;
+    opacity: 0.14;
+    animation: dots-drift 44s linear infinite;
+    will-change: background-position;
+  }
+}
+
+@keyframes aurora-drift {
+  0% {
+    transform: translate3d(-2%, -1%, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(2%, 1.5%, 0) scale(1.08);
+  }
+}
+@keyframes blob-float-1 {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(4rem, 3rem, 0);
+  }
+}
+@keyframes blob-float-2 {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-4rem, -3rem, 0);
+  }
+}
+@keyframes dots-drift {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 128px 256px;
+  }
+}
+
+/* Respect users who prefer reduced motion — hold the background still. */
+@media (prefers-reduced-motion: reduce) {
+  .aegis-bg__aurora,
+  .aegis-bg__blob,
+  .aegis-bg__dots {
+    animation: none !important;
+  }
+}
