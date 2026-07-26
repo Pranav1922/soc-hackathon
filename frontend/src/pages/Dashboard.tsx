@@ -3,9 +3,12 @@ import { m } from "framer-motion";
 import {
   FiActivity,
   FiAlertTriangle,
-  FiArrowRight,
+  FiCalendar,
+  FiCpu,
   FiDatabase,
+  FiFlag,
   FiGitMerge,
+  FiLayers,
   FiSearch,
   FiShare2,
   FiShield,
@@ -13,8 +16,13 @@ import {
   FiUsers,
 } from "react-icons/fi";
 import { useAnalysis } from "@/context/AnalysisContext";
+import { useHistory } from "@/context/HistoryContext";
+import { useDashboardData } from "@/hooks/useDashboardData";
 import KpiCard from "@/components/KpiCard";
-import EmptyState from "@/components/EmptyState";
+import RiskDistributionCard from "@/components/dashboard/RiskDistributionCard";
+import SystemHealthCard from "@/components/dashboard/SystemHealthCard";
+import RecentInvestigationsCard from "@/components/dashboard/RecentInvestigationsCard";
+import RecentAlertsCard from "@/components/dashboard/RecentAlertsCard";
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.07 } } };
 
@@ -41,13 +49,13 @@ function useKpis() {
     flagged: results.length,
     rulesTriggered: patterns.size,
     avgRisk,
-    hasData: response !== null,
   };
 }
 
 export default function Dashboard() {
-  const { response } = useAnalysis();
   const kpi = useKpis();
+  const data = useDashboardData();
+  const { view } = useHistory();
 
   return (
     <div className="space-y-8">
@@ -84,9 +92,46 @@ export default function Dashboard() {
         </div>
       </m.section>
 
-      {/* KPIs */}
+      {/* Platform overview — persistent metrics derived from History */}
       <section>
-        <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Key Metrics</h2>
+        <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Platform Overview</h2>
+        <m.div
+          variants={container}
+          initial="hidden"
+          animate="show"
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
+        >
+          <KpiCard label="Total Investigations" value={data.total} icon={FiLayers} accent="cyan" hint="Saved locally" />
+          <KpiCard
+            label="Investigations Today"
+            value={data.today}
+            icon={FiCalendar}
+            accent="violet"
+            trend={data.yesterday > 0 ? data.todayTrend : undefined}
+            trendLabel="vs yesterday"
+          />
+          <KpiCard
+            label="SAR Candidates"
+            value={data.sarCandidates}
+            icon={FiFlag}
+            accent="rose"
+            hint="Entities recommended to report"
+          />
+          <KpiCard
+            label="AI Confidence"
+            value={data.avgConfidence !== null ? data.avgConfidence * 100 : 0}
+            suffix="%"
+            icon={FiCpu}
+            accent="emerald"
+            hint="Avg query-understanding confidence"
+            unavailable={data.avgConfidence === null}
+          />
+        </m.div>
+      </section>
+
+      {/* Latest run — metrics from the current in-session investigation */}
+      <section>
+        <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Latest Run</h2>
         <m.div
           variants={container}
           initial="hidden"
@@ -102,37 +147,25 @@ export default function Dashboard() {
         </m.div>
       </section>
 
-      {/* Latest analysis summary / empty state */}
-      {response && response.understanding ? (
-        <section className="glass animate-fade-up p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Latest investigation</p>
-              <p className="mt-1 truncate text-lg font-semibold text-slate-100">“{response.query}”</p>
-              <p className="mt-1 text-sm text-slate-400">
-                Intent <span className="text-slate-300">{response.understanding.intent}</span> · Pattern{" "}
-                <span className="text-slate-300">{response.understanding.aml_pattern}</span> · {kpi.flagged} flagged
-              </p>
-            </div>
-            <Link to="/analyze" className="btn-outline shrink-0">
-              View results
-              <FiArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </section>
-      ) : (
-        <EmptyState
-          icon={FiSearch}
-          title="No analysis yet"
-          description="Ask a question like “Find suspicious structuring” or “Analyze customer C12345”. Results, explanations, and charts will appear here."
-          action={
-            <Link to="/analyze" className="btn-accent">
-              <FiSearch className="h-4 w-4" />
-              Start your first analysis
-            </Link>
-          }
-        />
-      )}
+      {/* Risk posture + system health */}
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="animate-fade-up lg:col-span-2">
+          <RiskDistributionCard bands={data.riskBands} totalFlagged={data.totalFlagged} />
+        </div>
+        <div className="animate-fade-up">
+          <SystemHealthCard />
+        </div>
+      </section>
+
+      {/* Recent investigations + alerts */}
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="animate-fade-up lg:col-span-2">
+          <RecentInvestigationsCard records={data.recent} onView={view} />
+        </div>
+        <div className="animate-fade-up">
+          <RecentAlertsCard alerts={data.alerts} />
+        </div>
+      </section>
     </div>
   );
 }

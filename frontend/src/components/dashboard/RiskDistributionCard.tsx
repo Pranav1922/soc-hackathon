@@ -38,7 +38,8 @@ export default function RiskDistributionCard({ bands, totalFlagged }: Props) {
           {ROWS.map((row) => {
             const count = bands[row.key];
             const pct = totalFlagged ? Math.round((count / totalFlagged) * 100) : 0;
-            const width = TWELFTHS[Math.round((count / max) * 12)];
+            // Any non-zero band gets at least a sliver so High risk is never invisible.
+            const width = TWELFTHS[count > 0 ? Math.max(1, Math.round((count / max) * 12)) : 0];
             return (
               <div key={row.key}>
                 <div className="mb-1.5 flex items-center justify-between text-xs">

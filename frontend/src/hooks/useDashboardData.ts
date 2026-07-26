@@ -5,6 +5,7 @@ import { useHistory } from "@/context/HistoryContext";
 export interface DashboardData {
   total: number;
   today: number;
+  yesterday: number;
   todayTrend: "up" | "down" | "none";
   riskBands: { high: number; medium: number; low: number };
   totalFlagged: number;
@@ -72,6 +73,7 @@ export function useDashboardData(): DashboardData {
     return {
       total: items.length,
       today,
+      yesterday,
       todayTrend,
       riskBands: bands,
       totalFlagged,
